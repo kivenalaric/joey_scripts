@@ -250,7 +250,7 @@
             var val = customFields[i].fieldValue || "";
             if (label) cfByLabel[label] = val;
         }
-        console.log("Frye Consult: Custom field values by label", cfByLabel);
+        // console.log("Frye Consult: Custom field values by label", cfByLabel);
 
         function cf(/* label variants */) {
             // 1. Exact (case-insensitive) match on any of the label variants
@@ -382,7 +382,7 @@
             console.log("Frye Consult: Opportunity data", oppData);
             var contactId = oppData.contactId || (oppData.contact && oppData.contact.id);
             return fetchContact(contactId, token).then(function(fullContact) {
-                console.log("Frye Consult: Contact data", fullContact);
+                // console.log("Frye Consult: Contact data", fullContact);
                 // Prefer contact.assignedTo (default GHL field on contact) over the opportunity's owner
                 var assignedUserId = fullContact.assignedTo || oppData.assignedTo;
                 return Promise.all([
@@ -391,12 +391,12 @@
                 ]).then(function(extras) {
                     var ownerName = extras[0];
                     var appointment = pickAppointment(extras[1]);
-                    console.log("Frye Consult: Appointment", appointment);
+                    // console.log("Frye Consult: Appointment", appointment);
                     return mapApiToFields(oppData, fieldDefs, ownerName, fullContact, appointment, contactId);
                 });
             });
         }).then(function(data) {
-            console.log("Frye Consult: Mapped fields", data);
+            // console.log("Frye Consult: Mapped fields", data);
             return fetchTemplate().then(function(tpl) { fillTemplate(data, tpl); });
         }).catch(function(err) {
             console.error("Frye Consult: Generate error:", err);
@@ -659,4 +659,4 @@
 
 })();
 
-// consultation ebd
+// consultation end
