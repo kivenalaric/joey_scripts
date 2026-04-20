@@ -328,7 +328,7 @@
         d.involvedParties = cf("involved parties", "involved party");
         d.priors = cf("prior criminal record", "prior criminal records", "prior charges/arrests", "priors", "prior");
         d.employer = cf("client employer/employment", "employer/employment", "employer");
-        d.employmentImpact = cfExact("personal impact - employment, career, life, etc.");
+        d.employmentImpact = cfExact("personal impact - employment, career, life, etc.:");
         d.medicalDiagnosis = cf("medical diagnosis/meds", "medical diagnosis");
 
         // Attorney / Outcomes
