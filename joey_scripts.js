@@ -487,9 +487,13 @@
             function m(v, t) { return v != null && String(v).toLowerCase().indexOf(String(t).toLowerCase()) > -1; }
             function wrap(text, f, s, mw) {
                 if (!text) return [];
-                var words = text.split(" "), lines = [], cur = "";
-                for (var i = 0; i < words.length; i++) { var t = cur ? cur + " " + words[i] : words[i]; if (f.widthOfTextAtSize(t, s) > mw && cur) { lines.push(cur); cur = words[i]; } else { cur = t; } }
-                if (cur) lines.push(cur); return lines;
+                var lines = [], segments = String(text).split(/\r?\n/);
+                for (var si = 0; si < segments.length; si++) {
+                    var words = segments[si].split(" "), cur = "";
+                    for (var i = 0; i < words.length; i++) { var t = cur ? cur + " " + words[i] : words[i]; if (f.widthOfTextAtSize(t, s) > mw && cur) { lines.push(cur); cur = words[i]; } else { cur = t; } }
+                    if (cur) lines.push(cur);
+                }
+                return lines;
             }
             // Single-line auto-shrink: reduces size until text fits maxWidth (min 5)
             function txtFit(page, text, x, yTop, maxWidth, baseSize, f) {
