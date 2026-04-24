@@ -482,7 +482,7 @@
             var p1 = pages[0], p2 = pages[1];
             var H = 792, sz = 9, szSm = 8, color = PDFLib.rgb(0, 0, 0);
 
-            function txt(page, text, x, yTop, size, f) { if (!text) return; page.drawText(String(text), {x:x, y:H-yTop, size:size||sz, font:f||font, color:color}); }
+            function txt(page, text, x, yTop, size, f) { if (!text) return; page.drawText(String(text).replace(/\r?\n/g, " "), {x:x, y:H-yTop, size:size||sz, font:f||font, color:color}); }
             function chk(page, checked, x, yTop) { if (checked) txt(page, "X", x+1, yTop, 10, fontBold); }
             function m(v, t) { return v != null && String(v).toLowerCase().indexOf(String(t).toLowerCase()) > -1; }
             function wrap(text, f, s, mw) {
@@ -498,9 +498,10 @@
             // Single-line auto-shrink: reduces size until text fits maxWidth (min 5)
             function txtFit(page, text, x, yTop, maxWidth, baseSize, f) {
                 if (!text) return;
+                var clean = String(text).replace(/\r?\n/g, " ");
                 var fnt = f || font, size = baseSize || sz;
-                while (size > 5 && fnt.widthOfTextAtSize(String(text), size) > maxWidth) size -= 0.5;
-                txt(page, text, x, yTop, size, fnt);
+                while (size > 5 && fnt.widthOfTextAtSize(clean, size) > maxWidth) size -= 0.5;
+                txt(page, clean, x, yTop, size, fnt);
             }
             // Multi-line auto-shrink: tries baseSize; if wrap exceeds maxLines, shrinks size & line-height
             // until it fits or hits minSize. Truncates last line with ellipsis if still over.
