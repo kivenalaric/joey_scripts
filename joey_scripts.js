@@ -4,7 +4,7 @@
 
     var FRYE_LOCATION_ID = "oUKKuxKyYWHUoncYOKhr";
     var fryeConsultInterval;
-    var FRYE_PDF_URL = "https://raw.githubusercontent.com/kivenalaric/joes_files/main/frye_new_docs.pdf";
+    var FRYE_PDF_URL = "https://raw.githubusercontent.com/kivenalaric/joey_scripts/main/u5ppdW-Unknown-5%20(1).pdf";
     var GHL_API = "https://services.leadconnectorhq.com";
 
     console.log("FRYE CONSULTATION SCRIPT LOADED");
@@ -126,18 +126,6 @@
         });
     }
 
-    var cachedUsers = {};
-    function fetchUserName(userId, token) {
-        if (!userId) return Promise.resolve("");
-        if (cachedUsers[userId]) return Promise.resolve(cachedUsers[userId]);
-        return ghlFetch("/users/" + userId, token).then(function(data) {
-            // data.name is already the full name — don't append lastName again (caused "Paul Stewart Stewart")
-            var name = (data.name || ((data.firstName || "") + " " + (data.lastName || ""))).trim();
-            cachedUsers[userId] = name;
-            return name;
-        }).catch(function() { return ""; });
-    }
-
     // Fetch full contact (for Primary Phone / Primary Email + address)
     function fetchContact(contactId, token) {
         if (!contactId) return Promise.resolve({});
@@ -235,7 +223,7 @@
     }
 
     // ── Map API response → PDF fields ──
-    function mapApiToFields(opp, fieldDefs, ownerName, fullContact, appointment, contactId) {
+    function mapApiToFields(opp, fieldDefs, fullContact, appointment, contactId) {
         var d = {};
         d.contactId = contactId || (opp.contactId || (opp.contact && opp.contact.id) || (fullContact && fullContact.id));
         d.locationId = getLocationIdFromUrl();
@@ -291,10 +279,11 @@
         }
 
         d.charges = opp.name || "";
-        // Intaker + Scheduled by — default GHL Assigned User on the contact
-        d.intaker = ownerName || "";
-        d.scheduledBy = ownerName || "";
-        d.staff = cf("assigned attorney", "assigned attorney (opportunity details)");
+        // Intaker + Scheduled by — intake team email (NOT opp owner / attorney)
+        d.intaker = "team100@fryelawgroup.com";
+        d.scheduledBy = "team100@fryelawgroup.com";
+        // Staff — intentionally left blank; filled in manually at time of consult (variable attorney coverage)
+        d.staff = "";
         d.legalStatus = cf("citizenship", "citizenship (criminal defense)", "legal status");
         d.calendarFeePaid = cf("calendar fee paid");
         d.reasonWaived = cf("reason waived");
@@ -349,11 +338,13 @@
         d.retainerOnly = cf("retainer only");
         d.retainerPlusTrial = cf("retainer + trial");
         d.singlePaymentRetainer = cf("single payment retainer");
-        d.paymentPlan = cf("payment plan");
+        // Payment Plan box is checked when the "Installment Plan?" opportunity field is Yes
+        d.paymentPlan = cf("installment plan?", "installment plan", "payment plan");
         d.noRetainerReferTo = cf("no retainer; reject or refer to", "reject or refer to");
         d.other = cf("other");
         d.dueAtSigning = cf("due at signing");
-        d.numInstallments = cf("number of installments", "# of installments");
+        // Use exact-only so we don't fuzzy-match "Number of Installments (Contracts)" — Contract/Agreement Setup tab field
+        d.numInstallments = cfExact("number of installments", "# of installments");
         d.dueDate = cf("due date", "installment due day");
         d.startDate = cf("start date", "installment start month");
         d.cashDiscount = cf("cash discount");
@@ -382,17 +373,9 @@
             console.log("Frye Consult: Opportunity data", oppData);
             var contactId = oppData.contactId || (oppData.contact && oppData.contact.id);
             return fetchContact(contactId, token).then(function(fullContact) {
-                // console.log("Frye Consult: Contact data", fullContact);
-                // Prefer contact.assignedTo (default GHL field on contact) over the opportunity's owner
-                var assignedUserId = fullContact.assignedTo || oppData.assignedTo;
-                return Promise.all([
-                    fetchUserName(assignedUserId, token),
-                    fetchAppointments(contactId, token)
-                ]).then(function(extras) {
-                    var ownerName = extras[0];
-                    var appointment = pickAppointment(extras[1]);
-                    // console.log("Frye Consult: Appointment", appointment);
-                    return mapApiToFields(oppData, fieldDefs, ownerName, fullContact, appointment, contactId);
+                return fetchAppointments(contactId, token).then(function(appts) {
+                    var appointment = pickAppointment(appts);
+                    return mapApiToFields(oppData, fieldDefs, fullContact, appointment, contactId);
                 });
             });
         }).then(function(data) {
