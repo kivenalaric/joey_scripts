@@ -279,9 +279,9 @@
         }
 
         d.charges = opp.name || "";
-        // Intaker + Scheduled by — intake team email (NOT opp owner / attorney)
-        d.intaker = "team100@fryelawgroup.com";
-        d.scheduledBy = "team100@fryelawgroup.com";
+        // Intaker + Scheduled by — intake team member name (NOT opp owner / attorney)
+        d.intaker = "Max Ackerman";
+        d.scheduledBy = "Max Ackerman";
         // Staff — intentionally left blank; filled in manually at time of consult (variable attorney coverage)
         d.staff = "";
         d.legalStatus = cf("citizenship", "citizenship (criminal defense)", "legal status");
@@ -315,7 +315,7 @@
         d.county = cf("county/jurisdiction (criminal defense)", "county/jurisdiction", "county");
         d.incidentNotes = cf("incident notes", "incident note");
         d.involvedParties = cf("involved parties", "involved party");
-        d.priors = cf("prior criminal record", "prior criminal records", "prior charges/arrests", "priors", "prior");
+        d.priors = cf("prior history notes", "prior history note");
         d.employer = cf("client employer/employment", "employer/employment", "employer");
         // Employment Impact — no GHL field maps to this box on the new form; leave blank
         d.employmentImpact = "";
