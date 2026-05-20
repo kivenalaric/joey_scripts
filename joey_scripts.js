@@ -279,9 +279,9 @@
         }
 
         d.charges = opp.name || "";
-        // Intaker + Scheduled by — intake team email (NOT opp owner / attorney)
-        d.intaker = "team100@fryelawgroup.com";
-        d.scheduledBy = "team100@fryelawgroup.com";
+        // Intaker + Scheduled by — intake team member name (NOT opp owner / attorney)
+        d.intaker = "Max Ackerman";
+        d.scheduledBy = "Max Ackerman";
         // Staff — intentionally left blank; filled in manually at time of consult (variable attorney coverage)
         d.staff = "";
         d.legalStatus = cf("citizenship", "citizenship (criminal defense)", "legal status");
@@ -315,9 +315,10 @@
         d.county = cf("county/jurisdiction (criminal defense)", "county/jurisdiction", "county");
         d.incidentNotes = cf("incident notes", "incident note");
         d.involvedParties = cf("involved parties", "involved party");
-        d.priors = cf("prior criminal record", "prior criminal records", "prior charges/arrests", "priors", "prior");
+        d.priors = cf("prior history notes", "prior history note");
         d.employer = cf("client employer/employment", "employer/employment", "employer");
-        d.employmentImpact = cfExact("personal impact - employment, career, life, etc.:");
+        // Employment Impact — no GHL field maps to this box on the new form; leave blank
+        d.employmentImpact = "";
         d.medicalDiagnosis = cf("medical diagnosis/meds", "medical diagnosis");
 
         // Attorney / Outcomes
@@ -512,17 +513,17 @@
                 for (var i = 0; i < lines.length; i++) txt(page, lines[i], x, yTop + (i * lh), size, fnt);
             }
 
-            // PAGE 1 — frye_new_docs.pdf
-            // Header: Consult Status / Type / Matter Qualified + Date/Time/Intaker/Scheduled
+            // ── PAGE 1 ── (new PDF: u5ppdW-Unknown-5 (1).pdf)
+            // Header — Consult Status / Type / Matter Qualified + Date/Time/Intaker/Scheduled
             chk(p1, m(data.consultStatus,"Completed"), 72, 113); chk(p1, m(data.consultStatus,"Cancelled"), 72, 126); chk(p1, m(data.consultStatus,"No Show"), 72, 139);
             chk(p1, m(data.consultType,"In Person"), 180, 113); chk(p1, m(data.consultType,"Zoom"), 180, 126); chk(p1, m(data.consultType,"Phone"), 180, 139);
             chk(p1, m(data.matterQualified,"Yes"), 288, 113); chk(p1, m(data.matterQualified,"No"), 288, 126);
-            txt(p1, data.date, 426, 100); txt(p1, data.time, 428, 113); txt(p1, data.intaker, 438, 126); txt(p1, data.scheduledBy, 438, 139);
-            // Reason not qualified + Staff
-            txt(p1, data.reasonNotQualified, 186, 158); txt(p1, data.staff, 427, 158);
+            txt(p1, data.date, 426, 100); txt(p1, data.time, 428, 113); txtFit(p1, data.intaker, 438, 126, 95, sz); txtFit(p1, data.scheduledBy, 438, 139, 95, sz);
+            // Reason not qualified + Staff (Staff left blank intentionally)
+            txt(p1, data.reasonNotQualified, 186, 158);
             // PNC Name + DOB
             txt(p1, data.pncName, 134, 179); txt(p1, data.dob, 360, 179);
-            // Phone + Email (shifted up ~14pt from previous iteration — prior text landed on Mailing row)
+            // Phone + Email
             txt(p1, data.phone, 110, 194); txt(p1, data.email, 342, 194);
             // Mailing Address
             txt(p1, data.mailingAddress, 156, 209);
@@ -530,7 +531,7 @@
             txt(p1, data.militaryStatus, 147, 223); txtFit(p1, data.legalStatus, 376, 223, 160, sz);
             // Charges
             txt(p1, data.charges, 118, 237, szSm);
-            // DoI / DoA / Court / County (court+county wrap to 2 lines if long)
+            // DoI / DoA / Court / County
             txt(p1, data.doi, 95, 251); txt(p1, data.doa, 205, 251);
             txtFit(p1, data.court, 325, 251, 65, sz);
             txtFit(p1, data.county, 445, 251, 90, sz);
@@ -538,53 +539,53 @@
             txtFit(p1, data.primarySource, 150, 265, 65, sz);
             txtFit(p1, data.subSource, 285, 265, 65, sz);
             txtFit(p1, data.clientReportedSource, 478, 265, 72, sz);
-            // Incident Notes (big box, ~13 lines) — anchor point (keep as-is)
-            wrapFit(p1, data.incidentNotes, 82, 325, 440, 13, szSm, 12);
-            // Involved Parties (~2 lines) — shift up to land inside box
-            wrapFit(p1, data.involvedParties, 82, 502, 440, 2, szSm, 12);
-            // Priors (~2 lines)
-            wrapFit(p1, data.priors, 82, 562, 440, 2, szSm, 12);
-            // Employer/Employment (inline)
-            txtFit(p1, data.employer, 202, 593, 340, sz);
-            // Employment Impact (~5 lines)
-            wrapFit(p1, data.employmentImpact, 82, 628, 440, 5, szSm, 12);
-            // Medical Diagnosis (~2 lines)
-            wrapFit(p1, data.medicalDiagnosis, 82, 720, 440, 2, szSm, 12);
+            // Incident Notes box (x=74-540, y=290-539) — big box, ~19 lines
+            wrapFit(p1, data.incidentNotes, 80, 302, 458, 19, szSm, 12);
+            // Involved Parties (left) + Priors (right) — side-by-side at y=561-599
+            wrapFit(p1, data.involvedParties, 80, 573, 228, 2, szSm, 12);
+            wrapFit(p1, data.priors, 318, 573, 218, 2, szSm, 12);
+            // Employer/Employment — inline on underline (label at y=608)
+            txtFit(p1, data.employer, 196, 619, 340, sz);
+            // Employment Impact (left) + Medical Diagnosis (right) — side-by-side at y=649-687
+            wrapFit(p1, data.employmentImpact, 80, 661, 228, 2, szSm, 12);
+            wrapFit(p1, data.medicalDiagnosis, 318, 661, 218, 2, szSm, 12);
+            // Desired Outcome (left) + Biggest Concerns (right) — moved to page 1 in new PDF, y=712-751
+            wrapFit(p1, data.desiredOutcome, 80, 724, 228, 2, szSm, 12);
+            wrapFit(p1, data.biggestConcerns, 318, 724, 218, 2, szSm, 12);
 
-            // PAGE 2 — frye_new_docs.pdf (Attorney Notes now at top)
-            // Attorney Notes (~15 lines)
-            wrapFit(p2, data.attorneyNotes, 82, 125, 440, 15, szSm, 12);
-            // Desired Outcome + Biggest Concerns (~8 lines)
-            wrapFit(p2, data.desiredOutcome, 82, 360, 210, 8, szSm, 12);
-            wrapFit(p2, data.biggestConcerns, 312, 360, 210, 8, szSm, 12);
-            // To Do if Retained + Assign To (~6 lines)
-            wrapFit(p2, data.todoIfRetained, 82, 498, 210, 6, szSm, 12);
-            wrapFit(p2, data.assignTo, 312, 498, 210, 6, szSm, 12);
-            // Emergency Contact + Relationship to PNC
-            txt(p2, data.emergencyContact, 185, 551); txt(p2, data.relationshipToPNC, 434, 551);
-            txt(p2, data.emergencyPhone, 112, 571); txt(p2, data.emergencyEmail, 285, 571);
-            // Retainer Only $ + Retainer + Trial $
-            chk(p2, !!data.retainerOnly, 72, 612); txt(p2, data.retainerOnly, 178, 612);
-            chk(p2, !!data.retainerPlusTrial, 251, 612); txt(p2, data.retainerPlusTrial, 365, 612);
-            // Single Payment / No Retainer
-            chk(p2, m(data.singlePaymentRetainer,"Yes")||m(data.singlePaymentRetainer,"Single"), 72, 632);
-            txt(p2, data.noRetainerReferTo, 413, 632);
-            // Payment Plan / Other
-            chk(p2, m(data.paymentPlan,"Yes")||m(data.paymentPlan,"Payment"), 72, 651);
-            txt(p2, data.other, 235, 651);
-            // Due at Signing / Installments / Due Date
-            txt(p2, data.dueAtSigning, 169, 670); txt(p2, data.numInstallments, 330, 670);
-            chk(p2, m(data.dueDate,"10"), 440, 670); chk(p2, m(data.dueDate,"20"), 477, 670);
-            // Start Date / Cash Discount / paid by
-            txt(p2, data.startDate, 133, 689); txt(p2, data.cashDiscount, 310, 689); txt(p2, data.cashDiscountPaidBy, 412, 689);
-            // Courtesy Discount + Notes
-            txt(p2, data.courtesyDiscount, 181, 708); txt(p2, data.courtesyNotes, 292, 708);
-            // Calendar Fee Paid + Reason Waived
+            // ── PAGE 2 ── (new PDF)
+            // Attorney Notes box (x=72-541, y=106-423) — big box, ~25 lines
+            wrapFit(p2, data.attorneyNotes, 80, 118, 458, 25, szSm, 12);
+            // To Do if Retained (left) + Assign To (right) — box y=450-530, 5 sub-rows (~16pt each)
+            wrapFit(p2, data.todoIfRetained, 80, 462, 228, 5, szSm, 16);
+            wrapFit(p2, data.assignTo, 312, 462, 228, 5, szSm, 16);
+            // Emergency Contact + Relationship to PNC (label y=541, line value y≈553)
+            txt(p2, data.emergencyContact, 185, 553); txt(p2, data.relationshipToPNC, 434, 553);
+            txt(p2, data.emergencyPhone, 112, 572); txt(p2, data.emergencyEmail, 285, 572);
+            // Pre-Warrant/Bond Only (left) + Retainer Only (right) — labels at y=577
+            txt(p2, data.retainerOnly, 405, 590);
+            // Retainer + Trial $___ + $___ (label y=594) — single retainerPlusTrial value goes in first $
+            txt(p2, data.retainerPlusTrial, 185, 606);
+            // Single Payment Retainer (left) + No Retainer; Reject or Refer to (right) — y=607
+            chk(p2, m(data.singlePaymentRetainer,"Yes")||m(data.singlePaymentRetainer,"Single"), 72, 619);
+            txt(p2, data.noRetainerReferTo, 410, 619);
+            // Payment Plan checkbox (left) — checked when "Installment Plan?" opp field is Yes
+            chk(p2, m(data.paymentPlan,"Yes"), 72, 633);
+            // Other (right of Payment Plan) — y=621
+            txt(p2, data.other, 235, 633);
+            // Due at Signing / # of Installments / Due Date 10th/20th (labels y=637)
+            txt(p2, data.dueAtSigning, 170, 649); txt(p2, data.numInstallments, 330, 649);
+            chk(p2, m(data.dueDate,"10"), 440, 649); chk(p2, m(data.dueDate,"20"), 479, 649);
+            // Start Date / Cash Discount / if paid by (label y=654)
+            txt(p2, data.startDate, 133, 666); txt(p2, data.cashDiscount, 310, 666); txt(p2, data.cashDiscountPaidBy, 420, 666);
+            // Courtesy Discount / Notes (label y=687)
+            txt(p2, data.courtesyDiscount, 181, 699); txt(p2, data.courtesyNotes, 290, 699);
+            // Calendar Fee Paid / Reason Waived (label y=707)
             var cfpV = data.calendarFeePaid;
             var cfpYes = cfpV === true || m(cfpV,"true") || m(cfpV,"yes") || m(cfpV,"paid") || m(cfpV,"1");
             var cfpNo  = cfpV === false || m(cfpV,"false") || m(cfpV,"no") || m(cfpV,"unpaid") || m(cfpV,"waived");
-            txt(p2, cfpYes ? "Yes" : (cfpNo ? "No" : ""), 178, 727);
-            txtFit(p2, data.reasonWaived, 295, 727, 220, sz);
+            txt(p2, cfpYes ? "Yes" : (cfpNo ? "No" : ""), 175, 719);
+            txtFit(p2, data.reasonWaived, 290, 719, 220, sz);
 
             return pdfDoc.save();
         }).then(function(filledBytes) {
