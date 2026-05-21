@@ -279,9 +279,9 @@
         }
 
         d.charges = opp.name || "";
-        // Intaker + Scheduled by — intake team member name (NOT opp owner / attorney)
-        d.intaker = "Max Ackerman";
-        d.scheduledBy = "Max Ackerman";
+        // Intaker + Scheduled by — pulled from the "Intaker" custom field on Opportunity Details
+        d.intaker = cf("intaker");
+        d.scheduledBy = cf("intaker");
         // Staff — intentionally left blank; filled in manually at time of consult (variable attorney coverage)
         d.staff = "";
         d.legalStatus = cf("citizenship", "citizenship (criminal defense)", "legal status");
