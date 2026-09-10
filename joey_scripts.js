@@ -294,7 +294,7 @@
         d.reasonNotQualified = cf("reason not qualified");
 
         // PNC Info — Criminal Defense Intake
-        d.pncName = cf("pnc is currently represented by", "pnc name", "contact name") || contact.name || "";
+        d.pncName = opp.name || "";
 
         // Opportunity Details — Phone/Email/Address prefer contact record (Primary Phone/Email live there)
         d.dob = cf("dob", "date of birth") || contact.dateOfBirth || "";
@@ -407,17 +407,21 @@
     function scanCards() {
         var cards = document.querySelectorAll(".crm-opportunities-card");
         if (!cards.length) return;
+        var toAdd = 0;
         cards.forEach(function (card) {
             if (card.classList.contains("frye_consult_added")) return;
             card.classList.add("frye_consult_added");
+            toAdd++;
             addConsultBtn(card);
         });
+        if (toAdd) console.log("Frye Consult: scanCards processing", toAdd, "new card(s) of", cards.length, "total");
     }
 
     function addConsultBtn(card) {
+        try {
         // Insert into the same icon container that adiv1.js uses
         var iconContainer = card.querySelector("div.flex.pt-2\\.5");
-        if (!iconContainer) return;
+        if (!iconContainer) { console.warn("Frye Consult: addConsultBtn — no iconContainer found on card", card); return; }
         iconContainer.style.overflow = "visible";
         iconContainer.style.flexWrap = "wrap";
 
@@ -453,6 +457,10 @@
         var lastIcon = iconContainer.lastElementChild;
         if (lastIcon) iconContainer.insertBefore(wrapper, lastIcon);
         else iconContainer.appendChild(wrapper);
+        console.log("Frye Consult: button inserted for card", getCardOpportunityId(card));
+        } catch (err) {
+            console.error("Frye Consult: addConsultBtn threw", err);
+        }
     }
 
     // ── PDF fill + preview ──
