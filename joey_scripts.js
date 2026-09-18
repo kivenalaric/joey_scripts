@@ -487,113 +487,105 @@
                 }
                 return lines;
             }
-            // Single-line auto-shrink: reduces size until text fits maxWidth (min 5)
-            function txtFit(page, text, x, yTop, maxWidth, baseSize, f) {
-                if (!text) return;
-                var clean = String(text).replace(/\r?\n/g, " ");
-                var fnt = f || font, size = baseSize || sz;
-                while (size > 5 && fnt.widthOfTextAtSize(clean, size) > maxWidth) size -= 0.5;
-                txt(page, clean, x, yTop, size, fnt);
+            // Trims text with a trailing ellipsis so it fits maxWidth at the given size
+            function ellipsize(text, fnt, size, maxWidth) {
+                if (fnt.widthOfTextAtSize(text, size) <= maxWidth) return text;
+                var t = text;
+                while (t.length > 1 && fnt.widthOfTextAtSize(t + "…", size) > maxWidth) t = t.slice(0, -1);
+                return t.replace(/\s+$/, "") + "…";
             }
-            // Multi-line auto-shrink: tries baseSize; if wrap exceeds maxLines, shrinks size & line-height
-            // until it fits or hits minSize. Truncates last line with ellipsis if still over.
-            function wrapFit(page, text, x, yTop, mw, maxLines, baseSize, baseLh, f) {
+            // Single-line field: fixed font size, ellipsis if the value exceeds maxWidth
+            function txtMax(page, text, x, yTop, maxWidth, size, f) {
                 if (!text) return;
-                var fnt = f || font, size = baseSize || szSm, lh = baseLh || 12;
-                var totalH = maxLines * lh, minSize = 5;
-                var lines = wrap(text, fnt, size, mw);
-                while (lines.length > maxLines && size > minSize) {
-                    size -= 0.5;
-                    lh = Math.max(size + 1, totalH / Math.ceil(lines.length));
-                    if (lh * lines.length > totalH) lh = totalH / lines.length;
-                    lines = wrap(text, fnt, size, mw);
-                }
+                var fnt = f || font, s = size || sz;
+                txt(page, ellipsize(String(text).replace(/\r?\n/g, " "), fnt, s, maxWidth), x, yTop, s, fnt);
+            }
+            // Multi-line box: fixed font size, wraps to maxWidth; last allowed line gets an ellipsis if text overflows maxLines
+            function wrapMax(page, text, x, yTop, mw, maxLines, size, lh, f) {
+                if (!text) return;
+                var fnt = f || font, s = size || szSm, lines = wrap(text, fnt, s, mw);
                 if (lines.length > maxLines) {
-                    lh = totalH / lines.length;
-                    if (lh < size) { // ensure no overlap; truncate instead
-                        lines = lines.slice(0, maxLines);
-                        var last = lines[maxLines - 1];
-                        while (last.length > 1 && fnt.widthOfTextAtSize(last + "…", size) > mw) last = last.slice(0, -1);
-                        lines[maxLines - 1] = last + "…";
-                        lh = totalH / maxLines;
-                    }
+                    lines = lines.slice(0, maxLines);
+                    lines[maxLines - 1] += "…";
                 }
-                for (var i = 0; i < lines.length; i++) txt(page, lines[i], x, yTop + (i * lh), size, fnt);
+                for (var i = 0; i < lines.length; i++) txt(page, ellipsize(lines[i], fnt, s, mw), x, yTop + (i * lh), s, fnt);
             }
 
             // ── PAGE 1 ── (new PDF: u5ppdW-Unknown-5 (1).pdf)
+            // Every text field is clipped with an ellipsis at its own max width (pt) so it never overlaps the next label/line
             // Header — Consult Status / Type / Matter Qualified + Date/Time/Intaker/Scheduled
             chk(p1, m(data.consultStatus,"Completed"), 72, 113); chk(p1, m(data.consultStatus,"Cancelled"), 72, 126); chk(p1, m(data.consultStatus,"No Show"), 72, 139);
             chk(p1, m(data.consultType,"In Person"), 180, 113); chk(p1, m(data.consultType,"Zoom"), 180, 126); chk(p1, m(data.consultType,"Phone"), 180, 139);
             chk(p1, m(data.matterQualified,"Yes"), 288, 113); chk(p1, m(data.matterQualified,"No"), 288, 126);
-            txt(p1, data.date, 426, 100); txt(p1, data.time, 428, 113); txtFit(p1, data.intaker, 438, 126, 95, sz); txtFit(p1, data.scheduledBy, 438, 139, 95, sz);
+            txtMax(p1, data.date, 426, 100, 110); txtMax(p1, data.time, 428, 113, 108);
+            txtMax(p1, data.intaker, 438, 126, 95); txtMax(p1, data.scheduledBy, 438, 139, 95);
             // Reason not qualified + Staff (Staff left blank intentionally)
-            txt(p1, data.reasonNotQualified, 186, 158);
+            txtMax(p1, data.reasonNotQualified, 186, 158, 200);
             // PNC Name + DOB
-            txt(p1, data.pncName, 134, 179); txt(p1, data.dob, 360, 179);
+            txtMax(p1, data.pncName, 134, 179, 170); txtMax(p1, data.dob, 360, 179, 175);
             // Phone + Email
-            txt(p1, data.phone, 110, 194); txt(p1, data.email, 342, 194);
+            txtMax(p1, data.phone, 110, 194, 190); txtMax(p1, data.email, 342, 194, 195);
             // Mailing Address
-            txt(p1, data.mailingAddress, 156, 209);
+            txtMax(p1, data.mailingAddress, 156, 209, 380);
             // Military + Legal Status
-            txt(p1, data.militaryStatus, 147, 223); txtFit(p1, data.legalStatus, 376, 223, 160, sz);
+            txtMax(p1, data.militaryStatus, 147, 223, 158); txtMax(p1, data.legalStatus, 376, 223, 160);
             // Charges
-            txt(p1, data.charges, 118, 237, szSm);
+            txtMax(p1, data.charges, 118, 237, 418, szSm);
             // DoI / DoA / Court / County
-            txt(p1, data.doi, 95, 251); txt(p1, data.doa, 205, 251);
-            txtFit(p1, data.court, 325, 251, 65, sz);
-            txtFit(p1, data.county, 445, 251, 90, sz);
+            txtMax(p1, data.doi, 95, 251, 80); txtMax(p1, data.doa, 205, 251, 82);
+            txtMax(p1, data.court, 325, 251, 65);
+            txtMax(p1, data.county, 445, 251, 90);
             // Primary Source / Subsource / Client Reported Source
-            txtFit(p1, data.primarySource, 150, 265, 65, sz);
-            txtFit(p1, data.subSource, 285, 265, 65, sz);
-            txtFit(p1, data.clientReportedSource, 478, 265, 72, sz);
+            txtMax(p1, data.primarySource, 150, 265, 65);
+            txtMax(p1, data.subSource, 285, 265, 65);
+            txtMax(p1, data.clientReportedSource, 478, 265, 58);
             // Incident Notes box (x=74-540, y=290-539) — big box, ~19 lines
-            wrapFit(p1, data.incidentNotes, 80, 302, 458, 19, szSm, 12);
+            wrapMax(p1, data.incidentNotes, 80, 302, 458, 19, szSm, 12);
             // Involved Parties (left) + Priors (right) — side-by-side at y=561-599
-            wrapFit(p1, data.involvedParties, 80, 573, 228, 2, szSm, 12);
-            wrapFit(p1, data.priors, 318, 573, 218, 2, szSm, 12);
+            wrapMax(p1, data.involvedParties, 80, 573, 226, 2, szSm, 12);
+            wrapMax(p1, data.priors, 318, 573, 216, 2, szSm, 12);
             // Employer/Employment — inline on underline (label at y=608)
-            txtFit(p1, data.employer, 196, 619, 340, sz);
+            txtMax(p1, data.employer, 196, 619, 338);
             // Employment Impact (left) + Medical Diagnosis (right) — side-by-side at y=649-687
-            wrapFit(p1, data.employmentImpact, 80, 661, 228, 2, szSm, 12);
-            wrapFit(p1, data.medicalDiagnosis, 318, 661, 218, 2, szSm, 12);
+            wrapMax(p1, data.employmentImpact, 80, 661, 226, 2, szSm, 12);
+            wrapMax(p1, data.medicalDiagnosis, 318, 661, 216, 2, szSm, 12);
             // Desired Outcome (left) + Biggest Concerns (right) — moved to page 1 in new PDF, y=712-751
-            wrapFit(p1, data.desiredOutcome, 80, 724, 228, 2, szSm, 12);
-            wrapFit(p1, data.biggestConcerns, 318, 724, 218, 2, szSm, 12);
+            wrapMax(p1, data.desiredOutcome, 80, 724, 226, 2, szSm, 12);
+            wrapMax(p1, data.biggestConcerns, 318, 724, 216, 2, szSm, 12);
 
             // ── PAGE 2 ── (new PDF)
             // Attorney Notes box (x=72-541, y=106-423) — big box, ~25 lines
-            wrapFit(p2, data.attorneyNotes, 80, 118, 458, 25, szSm, 12);
+            wrapMax(p2, data.attorneyNotes, 80, 118, 458, 25, szSm, 12);
             // To Do if Retained (left) + Assign To (right) — box y=450-530, 5 sub-rows (~16pt each)
-            wrapFit(p2, data.todoIfRetained, 80, 462, 228, 5, szSm, 16);
-            wrapFit(p2, data.assignTo, 312, 462, 228, 5, szSm, 16);
+            wrapMax(p2, data.todoIfRetained, 80, 462, 222, 5, szSm, 16);
+            wrapMax(p2, data.assignTo, 312, 462, 224, 5, szSm, 16);
             // Emergency Contact + Relationship to PNC (label y=541, line value y≈553)
-            txt(p2, data.emergencyContact, 185, 553); txt(p2, data.relationshipToPNC, 434, 553);
-            txt(p2, data.emergencyPhone, 112, 572); txt(p2, data.emergencyEmail, 285, 572);
+            txtMax(p2, data.emergencyContact, 185, 553, 132); txtMax(p2, data.relationshipToPNC, 434, 553, 102);
+            txtMax(p2, data.emergencyPhone, 112, 572, 132); txtMax(p2, data.emergencyEmail, 285, 572, 248);
             // Pre-Warrant/Bond Only (left) + Retainer Only (right) — labels at y=577
-            txt(p2, data.retainerOnly, 405, 590);
+            txtMax(p2, data.retainerOnly, 405, 590, 66);
             // Retainer + Trial $___ + $___ (label y=594) — single retainerPlusTrial value goes in first $
-            txt(p2, data.retainerPlusTrial, 185, 606);
+            txtMax(p2, data.retainerPlusTrial, 185, 606, 60);
             // Single Payment Retainer (left) + No Retainer; Reject or Refer to (right) — y=607
             chk(p2, m(data.singlePaymentRetainer,"Yes")||m(data.singlePaymentRetainer,"Single"), 72, 619);
-            txt(p2, data.noRetainerReferTo, 410, 619);
+            txtMax(p2, data.noRetainerReferTo, 410, 619, 98);
             // Payment Plan checkbox (left) — checked when "Installment Plan?" opp field is Yes
             chk(p2, m(data.paymentPlan,"Yes"), 72, 633);
             // Other (right of Payment Plan) — y=621
-            txt(p2, data.other, 235, 633);
+            txtMax(p2, data.other, 235, 633, 272);
             // Due at Signing / # of Installments / Due Date 10th/20th (labels y=637)
-            txt(p2, data.dueAtSigning, 170, 649); txt(p2, data.numInstallments, 330, 649);
+            txtMax(p2, data.dueAtSigning, 170, 649, 58); txtMax(p2, data.numInstallments, 330, 649, 50);
             chk(p2, m(data.dueDate,"10"), 440, 649); chk(p2, m(data.dueDate,"20"), 479, 649);
             // Start Date / Cash Discount / if paid by (label y=654)
-            txt(p2, data.startDate, 133, 666); txt(p2, data.cashDiscount, 310, 666); txt(p2, data.cashDiscountPaidBy, 420, 666);
+            txtMax(p2, data.startDate, 133, 666, 62); txtMax(p2, data.cashDiscount, 310, 666, 54); txtMax(p2, data.cashDiscountPaidBy, 420, 666, 92);
             // Courtesy Discount / Notes (label y=687)
-            txt(p2, data.courtesyDiscount, 181, 699); txt(p2, data.courtesyNotes, 290, 699);
+            txtMax(p2, data.courtesyDiscount, 181, 699, 66); txtMax(p2, data.courtesyNotes, 290, 699, 222);
             // Calendar Fee Paid / Reason Waived (label y=707)
             var cfpV = data.calendarFeePaid;
             var cfpYes = cfpV === true || m(cfpV,"true") || m(cfpV,"yes") || m(cfpV,"paid") || m(cfpV,"1");
             var cfpNo  = cfpV === false || m(cfpV,"false") || m(cfpV,"no") || m(cfpV,"unpaid") || m(cfpV,"waived");
             txt(p2, cfpYes ? "Yes" : (cfpNo ? "No" : ""), 175, 719);
-            txtFit(p2, data.reasonWaived, 290, 719, 220, sz);
+            txtMax(p2, data.reasonWaived, 290, 719, 222);
 
             return pdfDoc.save();
         }).then(function(filledBytes) {
